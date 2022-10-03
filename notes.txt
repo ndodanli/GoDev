@@ -1,3 +1,24 @@
 go mod edit -replace example.com/greetings=../greetings => use local folder
 go run . => run the code
 go mod tidy => match the go.mod file with the dependencies required in the source files.
+go build => build the program into an executable file
+go install => install the program into the bin folder
+go mod edit -replace example.com/greetings=../greetings
+
+
+
+-go work-
+cd /my/parent/dir
+go work init
+go work use project-one
+go work use project-two
+-go work-
+
+-change install directory-
+As an alternative, if you already have a directory like $HOME/bin in your shell path and you'd like to install your Go programs there, you can change the install target by setting the GOBIN variable using the go env command:
+
+$ go env -w GOBIN=/path/to/your/bin
+or
+
+$ go env -w GOBIN=C:\path\to\your\bin
+-change install directory-

@@ -1,29 +1,29 @@
 package main
 
-import "fmt"
+import (
+	"io"
+	"os"
+	"strings"
+)
 
-type Vertex struct {
-	X, Y float64
+type rot13Reader struct {
+	r io.Reader
 }
 
-func (v *Vertex) Scale(f float64) {
-	v.X = v.X * f
-	v.Y = v.Y * f
-}
-
-func ScaleFunc(v *Vertex, f float64) {
-	v.X = v.X * f
-	v.Y = v.Y * f
+func (rot13R *rot13Reader) Read(b []byte) (int, error) {
+	n, err := rot13R.r.Read(b)
+	for i, v := range b[:n] {
+		if v >= 'A' && v <= 'Z' {
+			b[i] = (v-'A'+13)%26 + 'A'
+		} else if v >= 'a' && v <= 'z' {
+			b[i] = (v-'a'+13)%26 + 'a'
+		}
+	}
+	return n, err
 }
 
 func main() {
-	v := Vertex{3, 4}
-	v.Scale(2)
-	ScaleFunc(&v, 10)
-
-	p := &Vertex{4, 3}
-	p.Scale(3)
-	ScaleFunc(p, 8)
-
-	fmt.Println(v, p)
+	s := strings.NewReader("Lbh penpxrq gur pbqr!")
+	r := rot13Reader{r: s}
+	io.Copy(os.Stdout, &r)
 }

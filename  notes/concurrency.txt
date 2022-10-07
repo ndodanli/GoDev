@@ -1,0 +1,21 @@
+--CHANNELS--
+-(channels)By default, sends and receives block until the other side is ready. 
+This allows goroutines to synchronize without explicit locks or condition variables.
+-(buffered channel) Sends to a buffered channel block only when the buffer is full. 
+Receives block when the buffer is empty.
+
+*Range and Close*
+-(range)A sender can close a channel to indicate that no more values will be sent.
+-(close)Receivers can test whether a channel has been closed by assigning a second parameter to the receive expression:
+    v, ok := <-ch
+After the last value has been received from the closed channel, ok is false.
+-(range)The loop for i := range c receives values from the channel repeatedly until it is closed.
+-(range)Only the sender should close a channel, never the receiver. Sending on a closed channel will cause a panic.
+-(range)Channels aren't like files; you don't usually need to close them.
+Closing is only necessary when the receiver must be told there are no more 
+values coming, such as to terminate a range loop.
+
+--SELECT--
+-(select)The select statement lets a goroutine wait on multiple communication operations.
+-(select)A select blocks until one of its cases can run, then it executes that case.
+It chooses one at random if multiple are ready.

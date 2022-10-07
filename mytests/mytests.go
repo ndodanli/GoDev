@@ -1,29 +1,103 @@
 package main
 
 import (
-	"io"
-	"os"
-	"strings"
+	"fmt"
 )
 
-type rot13Reader struct {
-	r io.Reader
-}
+var urlsChecked []string
 
-func (rot13R *rot13Reader) Read(b []byte) (int, error) {
-	n, err := rot13R.r.Read(b)
-	for i, v := range b[:n] {
-		if v >= 'A' && v <= 'Z' {
-			b[i] = (v-'A'+13)%26 + 'A'
-		} else if v >= 'a' && v <= 'z' {
-			b[i] = (v-'a'+13)%26 + 'a'
+func contains[T comparable](s []T, e T) bool {
+	for _, a := range s {
+		if a == e {
+			return true
 		}
 	}
-	return n, err
+	return false
+}
+
+type Fetcher interface {
+	// Fetch returns the body of URL and
+	// a slice of URLs found on that page.
+	Fetch(url string) (body string, urls []string, err error)
+}
+
+// Crawl uses fetcher to recursively crawl
+// pages starting with url, to a maximum of depth.
+func Crawl(url string, depth int, fetcher Fetcher) {
+
+	// TODO: Fetch URLs in parallel.
+	// TODO: Don't fetch the same URL twice.
+	// This implementation doesn't do either:
+	if depth <= 0 {
+		return
+	}
+	if !contains(urlsChecked, url) {
+		body, urls, err := go fetcher.Fetch(url)
+
+		urlsChecked = append(urlsChecked, url)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		fmt.Printf("found: %s %q\n", url, body)
+		for _, u := range urls {
+			Crawl(u, depth-1, fetcher)
+		}
+	}
+	return
 }
 
 func main() {
-	s := strings.NewReader("Lbh penpxrq gur pbqr!")
-	r := rot13Reader{r: s}
-	io.Copy(os.Stdout, &r)
+	urlsChecked = make([]string, 100)
+
+	Crawl("https://golang.org/", 4, fetcher)
+}
+
+// fakeFetcher is Fetcher that returns canned results.
+type fakeFetcher map[string]*fakeResult
+
+type fakeResult struct {
+	body string
+	urls []string
+}
+
+func (f fakeFetcher) Fetch(url string) (string, []string, error) {
+	if res, ok := f[url]; ok {
+		return res.body, res.urls, nil
+	}
+	return "", nil, fmt.Errorf("not found: %s", url)
+}
+
+// fetcher is a populated fakeFetcher.
+var fetcher = fakeFetcher{
+	"https://golang.org/": &fakeResult{
+		"The Go Programming Language",
+		[]string{
+			"https://golang.org/pkg/",
+			"https://golang.org/cmd/",
+		},
+	},
+	"https://golang.org/pkg/": &fakeResult{
+		"Packages",
+		[]string{
+			"https://golang.org/",
+			"https://golang.org/cmd/",
+			"https://golang.org/pkg/fmt/",
+			"https://golang.org/pkg/os/",
+		},
+	},
+	"https://golang.org/pkg/fmt/": &fakeResult{
+		"Package fmt",
+		[]string{
+			"https://golang.org/",
+			"https://golang.org/pkg/",
+		},
+	},
+	"https://golang.org/pkg/os/": &fakeResult{
+		"Package os",
+		[]string{
+			"https://golang.org/",
+			"https://golang.org/pkg/",
+		},
+	},
 }

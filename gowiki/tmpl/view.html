@@ -1,0 +1,25 @@
+<style>
+    h1 {
+        font-size: 1.5em;
+        font-weight: bold;
+        margin: 0.67em 0;
+    }
+
+    p {
+        margin: 1em 0;
+    }
+
+    .body {
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        font-size: 14px;
+        line-height: 20px;
+        color: #333333;
+        background-color: #ffffff;
+    }
+</style>
+
+<h1>{{.Title}}</h1>
+
+<p>[<a href="/edit/{{.Title}}">edit</a>]</p>
+
+<div class="body">{{printf "%s" .Body}}</div>

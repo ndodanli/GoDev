@@ -12,7 +12,7 @@ import (
 	"regexp"
 )
 
-var templates = template.Must(template.ParseFiles("edit.html", "view.html"))
+var templates = template.Must(template.ParseFiles("tmpl/edit.html", "tmpl/view.html"))
 
 var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
 
@@ -39,12 +39,12 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
 }
 
 func (p *Page) save() error {
-	fileName := p.Title + ".txt"
+	fileName := "data/" + p.Title + ".txt"
 	return os.WriteFile(fileName, p.Body, 0600)
 }
 
 func loadPage(title string) (*Page, error) {
-	filename := title + ".txt"
+	filename := "data/" + title + ".txt"
 	body, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
@@ -59,6 +59,9 @@ func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
 		http.Redirect(w, r, "/edit/"+title, http.StatusFound)
 		return
 	}
+
+	createHTMLPageLinks(p)
+
 	renderTemplate(w, "view", p)
 }
 
@@ -85,6 +88,20 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
 }
 
+func createHTMLPageLinks(p *Page) {
+
+	wikiPageLink := regexp.MustCompile(`\[([a-zA-Z]+)\]`)
+
+	p.Body = wikiPageLink.ReplaceAllFunc(p.Body, func(s []byte) []byte {
+		// this appears to replace "[PageName]" with "PageName"
+		group := wikiPageLink.ReplaceAllString(string(s), "$1")
+		pageLink := "<a href='/view/" + group + "'>" + group + "</a>"
+
+		return []byte(pageLink)
+	})
+
+}
+
 func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		m := validPath.FindStringSubmatch(r.URL.Path)
@@ -95,7 +112,13 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 		fn(w, r, m[2])
 	}
 }
+
+func rootHandler(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, "/view/FrontPage", http.StatusFound)
+}
+
 func main() {
+	http.HandleFunc("/", rootHandler)
 	http.HandleFunc("/view/", makeHandler(viewHandler))
 	http.HandleFunc("/edit/", makeHandler(editHandler))
 	http.HandleFunc("/save/", makeHandler(saveHandler))

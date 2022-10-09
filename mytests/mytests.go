@@ -2,102 +2,60 @@ package main
 
 import (
 	"fmt"
+	"strings"
 )
 
-var urlsChecked []string
-
-func contains[T comparable](s []T, e T) bool {
-	for _, a := range s {
-		if a == e {
-			return true
-		}
-	}
-	return false
+type Shape interface {
+	Area() float64
+	Test() string
 }
 
-type Fetcher interface {
-	// Fetch returns the body of URL and
-	// a slice of URLs found on that page.
-	Fetch(url string) (body string, urls []string, err error)
+type Skin interface {
+	Color() float64
 }
 
-// Crawl uses fetcher to recursively crawl
-// pages starting with url, to a maximum of depth.
-func Crawl(url string, depth int, fetcher Fetcher) {
+type Cube struct {
+	side   float64
+	radius float64
+}
 
-	// TODO: Fetch URLs in parallel.
-	// TODO: Don't fetch the same URL twice.
-	// This implementation doesn't do either:
-	if depth <= 0 {
-		return
-	}
-	if !contains(urlsChecked, url) {
-		body, urls, err := go fetcher.Fetch(url)
+func (c Cube) Area() float64 {
+	fmt.Printf("memory address of c is %p\n", &c)
+	return c.side * c.side * c.side * c.radius
+}
 
-		urlsChecked = append(urlsChecked, url)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		fmt.Printf("found: %s %q\n", url, body)
-		for _, u := range urls {
-			Crawl(u, depth-1, fetcher)
-		}
-	}
-	return
+func (c *Cube) Test() string {
+	fmt.Printf("memory address of *c is %p\n", c)
+
+	return "test"
 }
 
 func main() {
-	urlsChecked = make([]string, 100)
+	rr := Cube{side: 2, radius: 3}
+	var r Shape = &rr
+	fmt.Printf("memory address of r is %p\n", &r)
+	r.Area()
+	r.Test()
 
-	Crawl("https://golang.org/", 4, fetcher)
+	// var s Shape = &r
+	// s.Area()
+	// s.Test()
+	// explain(s, "s")
+
+	// v, ok := s.(Cube)
+	// fmt.Println("v", "ok:", ok)
+	// explain(v, "v")
+
 }
 
-// fakeFetcher is Fetcher that returns canned results.
-type fakeFetcher map[string]*fakeResult
-
-type fakeResult struct {
-	body string
-	urls []string
-}
-
-func (f fakeFetcher) Fetch(url string) (string, []string, error) {
-	if res, ok := f[url]; ok {
-		return res.body, res.urls, nil
+func explain(v interface{}, key string) {
+	fmt.Printf("%v value is %v\n", key, v)
+	fmt.Printf("%v type is %T\n", key, v)
+	switch v.(type) {
+	case string:
+		fmt.Printf("%v in uppercase if string", strings.ToUpper(v.(string)))
+	case Cube:
+		fmt.Printf("%v is a cube", v.(Cube))
 	}
-	return "", nil, fmt.Errorf("not found: %s", url)
-}
 
-// fetcher is a populated fakeFetcher.
-var fetcher = fakeFetcher{
-	"https://golang.org/": &fakeResult{
-		"The Go Programming Language",
-		[]string{
-			"https://golang.org/pkg/",
-			"https://golang.org/cmd/",
-		},
-	},
-	"https://golang.org/pkg/": &fakeResult{
-		"Packages",
-		[]string{
-			"https://golang.org/",
-			"https://golang.org/cmd/",
-			"https://golang.org/pkg/fmt/",
-			"https://golang.org/pkg/os/",
-		},
-	},
-	"https://golang.org/pkg/fmt/": &fakeResult{
-		"Package fmt",
-		[]string{
-			"https://golang.org/",
-			"https://golang.org/pkg/",
-		},
-	},
-	"https://golang.org/pkg/os/": &fakeResult{
-		"Package os",
-		[]string{
-			"https://golang.org/",
-			"https://golang.org/pkg/",
-		},
-	},
 }

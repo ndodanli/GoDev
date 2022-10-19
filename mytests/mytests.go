@@ -2,41 +2,40 @@ package main
 
 import (
 	"fmt"
-	"log"
 )
 
-type customString string
-type customInt int
+func calc(h int, citations []int, ch chan int, n int) {
+	counter := 0
 
-func (x customString) String() string {
-	return "dsadsad"
+	for i := 0; i < n; i++ {
+		if h <= citations[i] {
+			counter++
+		}
+	}
+	if h <= counter {
+		ch <- h
+	} else {
+		ch <- 0
+	}
 }
 
-func Println[T ~int | ~string](v T) {
-	log.Println(v)
+func hIndex(citations []int) int {
+	n := len(citations)
+	ch := make(chan int)
+	defer close(ch)
+	for i := 0; i < n; i++ {
+		go calc(i+1, citations, ch, n)
+	}
+	var result int = -1
+	for i := 0; i < n; i++ {
+		v := <-ch
+		if v > result {
+			result = v
+		}
+	}
+	return result
 }
 
-func printMemoryAddress[T any](v T) {
-	log.Printf("memory address: %p", v)
-}
 func main() {
-	// arr0 := [2]int{1, 2}
-	slice0 := make([]int, 10, 15)
-	fmt.Printf("value: %v length: %v cap: %v\n", slice0, len(slice0), cap(slice0))
-	slice0Ptr := slice0
-	printMemoryAddress(slice0)
-	printMemoryAddress(slice0Ptr)
-	slice0[0] = 1
-	slice0 = append(slice0, 1, 2, 3, 4, 5)
-	fmt.Printf("value: %v length: %v cap: %v\n", slice0, len(slice0), cap(slice0))
-	printMemoryAddress(slice0)
-	printMemoryAddress(slice0Ptr)
-	fmt.Println(slice0Ptr)
-	slice0 = append(slice0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
-	fmt.Printf("value: %v length: %v cap: %v\n", slice0, len(slice0), cap(slice0))
-	printMemoryAddress(slice0)
-	printMemoryAddress(slice0Ptr)
-	fmt.Println(slice0Ptr)
-	// fmt.Printf("arr0: %p\n", arr0)
-	// fmt.Printf("slice0: %p\n", slice0)
+	fmt.Printf("hIndex([]int{3, 0, 6, 1, 5}): %v\n", hIndex([]int{0}))
 }

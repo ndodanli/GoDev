@@ -88,15 +88,24 @@ func minWindow(s string, t string) string {
 		}
 		m[string(s[end])]--
 		end++
+		// fmt.Printf("end: %v\n", end)
 		for counter == 0 {
+			// fmt.Printf("begin: %v\n", begin)
+			// fmt.Printf("head: %v\n", head)
+			// fmt.Printf("end: %v\n", end)
 			if end-begin < d {
 				d = end - begin
 				head = begin
-				str := s[head : head+d]
-				fmt.Printf("str: %v\n", str)
+				// if d == tLen {
+				// 	return s[head : head+d]
+				// }
 			}
+			str := s[begin : begin+end-begin]
+			fmt.Printf("str: %v\n", str)
+			fmt.Printf("str: %v\n", s)
 			if m[string(s[begin])] == 0 {
 				counter++
+				fmt.Println("STOP")
 			}
 			m[string(s[begin])]++
 			begin++
@@ -116,7 +125,7 @@ func main() {
 	start := time.Now()
 	// s, _ := os.ReadFile("test_one.txt")
 	// t, _ := os.ReadFile("test_two.txt")
-	s := "DAOBECODEBANC"
+	s := "DCCBOAGAACCBABAGGCF"
 	//		D AOBEC Y BCA HNC
 	//    D A O B E C A B E B  A  N  C
 	//    1 2 3 4 5 6 7 8 9 10 11 12 13
